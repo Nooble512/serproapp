@@ -4,6 +4,7 @@ import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:serproapp/model/Cupon.dart';
 import 'package:serproapp/model/EmpresaDuenioModel.dart';
 import 'package:http/http.dart' as http;
 import 'package:serproapp/model/Imagenes.dart';
@@ -11,6 +12,7 @@ import 'package:serproapp/model/Url_Api.dart';
 import 'package:serproapp/src/cambiar_logo_empresa.dart';
 import 'package:serproapp/src/editar_empresa.dart';
 import 'package:serproapp/src/nueva_imagen_empresa.dart';
+import 'package:serproapp/src/nuevo_cupon.dart';
 
 class EmpresaDuenio extends StatefulWidget {
   String token;
@@ -25,7 +27,6 @@ class _EmpresaDuenioState extends State<EmpresaDuenio> {
   _EmpresaDuenioState(this.token);
 
   Future<EmpresaDuenioModel> _empresa;
-
   Future<EmpresaDuenioModel> _getEmpresa() async{
     String url = '${UrlApi().url}/api/empresa';
     Map<String, String> header = {
@@ -54,6 +55,29 @@ class _EmpresaDuenioState extends State<EmpresaDuenio> {
         imagenes, 
       );
       return empresa;
+    } else {
+      throw Exception('Error');
+    }
+  }
+
+  Future<List<Cupon>> _cupones;
+  Future<List<Cupon>> _getCupones() async {
+    String url = '${UrlApi().url}/api/empresa/cupon/cantidad';
+    Uri uri = Uri.parse(url);
+    final response = await http.get(uri, headers: { "token": token });
+    if (response.statusCode == 200) {
+      final jsonData = jsonDecode(utf8.decode(response.bodyBytes));
+      List<Cupon> cupones = [];
+      for (var item in jsonData) {
+        cupones.add(Cupon(
+          item['id'],
+          item['id_emp'],
+          item['nombre'],
+          item['descripcion'],
+          item['cantidad'],
+        ));
+      }
+      return cupones;
     } else {
       throw Exception('Error');
     }
@@ -99,6 +123,7 @@ class _EmpresaDuenioState extends State<EmpresaDuenio> {
   
   @override
   void initState() {
+    _cupones = _getCupones();
     _empresa = _getEmpresa();
     super.initState();
   }
@@ -146,8 +171,7 @@ class _EmpresaDuenioState extends State<EmpresaDuenio> {
         ),
         const SizedBox(height: 30),
         const Text("Imagenes"),
-        // ignore: sized_box_for_whitespace
-        Container(
+        SizedBox(
           width: double.infinity,
           height: 300,
           child: PageView(
@@ -159,6 +183,7 @@ class _EmpresaDuenioState extends State<EmpresaDuenio> {
           ),
         ),
         const SizedBox(height: 30),
+        _buildCupones(),
         SizedBox(
           height: 300,
           width: 450,
@@ -176,6 +201,119 @@ class _EmpresaDuenioState extends State<EmpresaDuenio> {
 
       ],
     );
+  }
+
+  Widget _buildCupones(){
+    return FutureBuilder(
+      future: _cupones,
+      builder: (BuildContext context, AsyncSnapshot<List<Cupon>> snapshot) {
+        if (snapshot.hasData) {
+          return Column(
+            children: <Widget>[
+              const Text("Cupones"),
+              SizedBox(
+                width: double.infinity,
+                height: 300,
+                child: PageView(
+                  controller: PageController(
+                    viewportFraction: 0.5
+                  ),
+                  physics: const BouncingScrollPhysics(),
+                  children: _builCountainerCup(snapshot.data),
+                ),
+              ),
+              const SizedBox(height: 30),
+            ],
+          );
+        } else if (snapshot.hasError) {
+          return Column(
+            children: const[
+              Text("Error"),
+              SizedBox(height: 30),
+            ],
+          );
+        }
+        return Column(
+          children: const [
+            Center(
+              child: CircularProgressIndicator(),
+            ),
+            SizedBox(height: 30),
+          ],
+        );
+      }
+    );
+  }
+
+  List<Widget> _builCountainerCup(List<Cupon> cupones){
+    List<Widget> lista = [];
+    for (var item in cupones) {
+      lista.add(
+        Container(
+          margin: const EdgeInsets.only(left: 20),
+          decoration: BoxDecoration(
+            color: Colors.blueGrey,
+            borderRadius: BorderRadius.circular(30),
+          ),
+          width: double.infinity,
+          height: 300,
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: <Widget>[
+              const Text("Nombre",
+                style:  TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                ),
+              ),
+              Text(item.nombre, style: const TextStyle(color: Colors.white)),
+              const SizedBox(height: 30),
+              const Text("Descripción",
+                style:  TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                ),
+              ),
+              Text(item.descripcion, style: const TextStyle(color: Colors.white)),
+              const SizedBox(height: 30),
+              const Text("Cantidad",
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                ),
+              ),
+              Text(item.cantidad.toString(), style: const TextStyle(color: Colors.white)),
+            ],
+          ),
+        ),
+      );
+    }
+    lista.add(
+      Container(
+        margin: const EdgeInsets.only(left: 30),
+        decoration: BoxDecoration(
+          color: Colors.blueGrey,
+          borderRadius: BorderRadius.circular(30),
+        ),
+        child: Center(
+          child: FloatingActionButton(
+            elevation: 10,
+            backgroundColor: Colors.white,
+            onPressed: (){
+              Navigator.push(context, MaterialPageRoute(builder: (context) => NuevoCupon(token)));
+            },
+            child: const Icon(
+              Icons.playlist_add_rounded,
+              color: Colors.grey,
+            ),
+          )
+        ),
+      )
+    );
+    return lista;
   }
 
   List<Widget> _builImagenes(List<Imagenes> imagen){
@@ -210,7 +348,6 @@ class _EmpresaDuenioState extends State<EmpresaDuenio> {
         child: Center(
           child: FloatingActionButton(
             elevation: 10,
-            
             backgroundColor: Colors.white,
             onPressed: (){
               Navigator.push(context, MaterialPageRoute(builder: (context) => NuevaImagenEmpresa(token)));

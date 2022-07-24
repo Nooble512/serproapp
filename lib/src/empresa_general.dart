@@ -1,9 +1,12 @@
+// ignore_for_file: use_build_context_synchronously
+
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_phone_direct_caller/flutter_phone_direct_caller.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:serproapp/model/Comentario.dart';
+import 'package:serproapp/model/Cupon.dart';
 import 'package:serproapp/model/Empresa.dart';
 import 'package:serproapp/model/Imagenes.dart';
 import 'package:serproapp/model/Url_Api.dart';
@@ -13,6 +16,7 @@ import 'package:serproapp/src/editat_comentario.dart';
 import 'package:serproapp/src/nuevo_comentario.dart';
 import 'package:serproapp/src/ver_comentarios.dart';
 import 'package:serproapp/src/ver_imagen.dart';
+import 'package:toast/toast.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 class EmpresaGeneral extends StatefulWidget {
@@ -124,6 +128,24 @@ class _EmpresaGeneralState extends State<EmpresaGeneral> {
     }
   }
 
+  Future<List<Cupon>> _cupones;
+  Future<List<Cupon>> _getCupones() async {
+    String url = "${UrlApi().url}/api/empresa/cupon/mostrar";
+    Map<String, String> body = { "id_emp": '$idNegocio' };
+    Uri uri = Uri.parse(url);
+    final response = await http.post(uri, body: body, headers: { "token":token });
+    if (response.statusCode == 200){
+      final jsonData = jsonDecode(utf8.decode(response.bodyBytes));
+      List<Cupon> cupones = [];
+      for (var item in jsonData){
+        cupones.add(Cupon(item['id'], item['id_emp'], item['nombre'], item['descripcion'], item['cantidad']));
+      }
+      return cupones;
+    } else {
+      throw Exception('Error');
+    }
+  }
+
   void _interaccionEmp() {
     String url = "${UrlApi().url}/api/interaccion/insertar/empresa";
     Map<String, String> body = { 'id_emp':'$idNegocio' };
@@ -141,6 +163,7 @@ class _EmpresaGeneralState extends State<EmpresaGeneral> {
   @override
   void initState() {
     _interaccionEmp();
+    _cupones = _getCupones();
     _comenXD = _getComenXD();
     futureEmpresa = _getEmpresa();
     _comentario = _getComentario();
@@ -235,6 +258,15 @@ class _EmpresaGeneralState extends State<EmpresaGeneral> {
                 children: _imagenes(empresa.imagenes),
               ),
             ),
+            const SizedBox(height: 30),
+            const Text(
+              "Cupones",
+              style: TextStyle(
+                fontSize: 30,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            _buildCupones(),
             const Text(
               "Ubicación",
               style: TextStyle(
@@ -493,6 +525,157 @@ class _EmpresaGeneralState extends State<EmpresaGeneral> {
         }
         return const CircularProgressIndicator();
       },
+    );
+  }
+
+  void agregarCupon(int id_cup) async {
+    String url = "${UrlApi().url}/api/empresa/cupon/vincular";
+    Map<String, String> body = { 
+      'id_cupon': id_cup.toString(),
+    };
+    Uri uri = Uri.parse(url);
+    final response = await http.post(uri, body: body, headers: { "token":token });
+    if (response.statusCode == 200){
+      Toast.show("Cupon agregado", context, duration: Toast.LENGTH_LONG, gravity: Toast.CENTER);
+      Navigator.pop(context);
+      Navigator.push(context, MaterialPageRoute(builder: (context) => EmpresaGeneral(idNegocio, token)));
+    } else if (response.statusCode == 400){
+      final jsonData = json.decode(response.body);
+      Toast.show(jsonData['Error'], context, duration: Toast.LENGTH_LONG, gravity: Toast.CENTER);
+    } else {
+      Toast.show("Error al agregar el cupon", context, duration: Toast.LENGTH_LONG, gravity: Toast.CENTER);
+    }
+  }
+
+  List<Widget> _listCupones (List<Cupon> cuponeslist){
+    List<Widget> cupones = [];
+    if (cuponeslist.isNotEmpty){
+      for (var item in cuponeslist){
+        cupones.add(
+          GestureDetector(
+            child: Container(
+              margin: const EdgeInsets.only(left: 20),
+              decoration: BoxDecoration(
+                color: Colors.blueGrey,
+                borderRadius: BorderRadius.circular(30),
+              ),
+              width: double.infinity,
+              height: 300,
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: <Widget>[
+                  const Text("Nombre",
+                    style:  TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                    ),
+                  ),
+                  Text(item.nombre, style: const TextStyle(color: Colors.white)),
+                  const SizedBox(height: 30),
+                  const Text("Descripción",
+                    style:  TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                    ),
+                  ),
+                  Text(item.descripcion, style: const TextStyle(color: Colors.white)),
+                  const SizedBox(height: 30),
+                  const Text("Cantidad",
+                    style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                    ),
+                  ),
+                  Text(item.cantidad.toString(), style: const TextStyle(color: Colors.white)),
+                ]
+              ),
+            ),
+            onTap: (){
+              showDialog(
+                context: context, 
+                builder: (context) => AlertDialog(
+                  title: const Text("Cupon"),
+                  content: const Text("¿Desea agregar el cupon?"),
+                  actions: <Widget>[
+                    TextButton(
+                      onPressed: () {
+                        Navigator.pop(context);
+                      },
+                      child: const Text("Cancelar")
+                    ),
+                    TextButton(
+                      onPressed: () {
+                        Navigator.pop(context);
+                        agregarCupon(item.id);
+                      },
+                      child: const Text("Aceptar")
+                    ),
+                  ],
+                ),
+              );
+            },
+          )
+        );
+      }
+    } else {
+      cupones.add(
+        Container(
+          margin: const EdgeInsets.only(left: 20),
+          decoration: BoxDecoration(
+            color: Colors.blueGrey,
+            borderRadius: BorderRadius.circular(30),
+          ),
+          width: double.infinity,
+          height: 300,
+          child: const Center(
+            child: Text("No hay cupones"),
+          ),
+        )
+      );
+    }
+    
+    return cupones;
+  }
+
+  FutureBuilder _buildCupones(){
+    return FutureBuilder(
+      future: _cupones,
+      builder: (context, AsyncSnapshot snapshot){
+        if (snapshot.hasData){
+          return Column(
+            children: <Widget>[
+              SizedBox(
+                width: double.infinity,
+                height: 300,
+                child: PageView(
+                  controller: PageController(
+                    viewportFraction: 0.5
+                  ),
+                  physics: const BouncingScrollPhysics(),
+                  children: _listCupones(snapshot.data),
+                ),
+              ),
+              const SizedBox(height: 30),
+            ],
+          );
+        } else if (snapshot.hasError){
+          return Column(
+            children: const [
+              Text("A ocurrido un error al cargar los cupones"),
+              SizedBox(height: 30),
+            ],
+          );
+        }
+        return Column(
+          children: const <Widget>[
+            CircularProgressIndicator(),
+            SizedBox(height: 30),
+          ],
+        );
+      }
     );
   }
 

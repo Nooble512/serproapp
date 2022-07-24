@@ -1,4 +1,4 @@
-// ignore_for_file: implementation_imports, must_be_immutable, no_logic_in_create_state, avoid_print
+// ignore_for_file: implementation_imports, must_be_immutable, no_logic_in_create_state, avoid_print, use_build_context_synchronously
 
 import 'dart:convert';
 
@@ -13,7 +13,9 @@ import 'package:serproapp/src/crear_empresa.dart';
 import 'package:serproapp/src/datos_usuario.dart';
 import 'package:serproapp/src/empresa_duenio.dart';
 import 'package:serproapp/src/empresa_general.dart';
+import 'package:serproapp/src/mis_cupones.dart';
 import 'package:serproapp/src/ver_estadisticas.dart';
+import 'package:toast/toast.dart';
 
 class Inicio extends StatefulWidget {
   String token;
@@ -204,6 +206,14 @@ class _InicioState extends State<Inicio> {
               Navigator.push(context, MaterialPageRoute(builder: (context) => DatosUsuario(token)));
             },
           ),
+          ListTile(
+            title: const Text("Mis cupones"),
+            trailing: const Icon(Icons.confirmation_number),
+            onTap: () {
+              Navigator.of(context).pop();
+              Navigator.push(context, MaterialPageRoute(builder: (context) => MisCupones(token)));
+            },
+          ),
           _empresaTale(user),
           ListTile(
             title: const Text("Cerrar Sesión"),
@@ -241,6 +251,25 @@ class _InicioState extends State<Inicio> {
     }
   }
 
+  String cupon = "";
+
+  void _canjear() async {
+    String url = '${UrlApi().url}/api/empresa/cupon/canjear';
+    Map<String, String> body = {
+      'codigo': cupon,
+    };
+    Uri uri = Uri.parse(url);
+    final response = await http.post(uri, headers: { "token": token }, body: body);
+    if (response.statusCode == 200){
+      Toast.show('Cupon canjeado', context, duration: Toast.LENGTH_LONG, gravity: Toast.CENTER);
+    } else if (response.statusCode == 400) {
+      final jsonData = jsonDecode(utf8.decode(response.bodyBytes));
+      Toast.show(jsonData["Error"], context, duration: Toast.LENGTH_LONG, gravity: Toast.CENTER);
+    } else {
+      Toast.show('Ocurrio un error', context, duration: Toast.LENGTH_LONG, gravity: Toast.CENTER);
+    }
+  }
+
   Widget _empresaTale(Usuario user){
     // Si el estado es 1, se obtengra los datos de la empresa de un get
     if (user.estado == 1) {
@@ -258,6 +287,40 @@ class _InicioState extends State<Inicio> {
                   onTap: () {
                     Navigator.of(context).pop();
                     Navigator.push(context, MaterialPageRoute(builder: (context) => EmpresaDuenio(token)));
+                  },
+                ),
+                ListTile(
+                  title: const Text("Canjear cupon"),
+                  trailing: const Icon(Icons.confirmation_number_outlined),
+                  onTap: () {
+                    showDialog(
+                      context: context, 
+                      builder: (context) => AlertDialog(
+                        title: const Text("Cupon"),
+                        content: TextField(
+                          decoration: const InputDecoration(
+                            hintText: "Cupon",
+                          ),
+                          onChanged: (value) {
+                            cupon = value;
+                          },
+                        ),
+                        actions: <Widget>[
+                          TextButton(
+                            onPressed: () {
+                              Navigator.pop(context);
+                            },
+                            child: const Text("Cerrar")
+                          ),
+                          TextButton(
+                            onPressed: () {
+                              _canjear();
+                            },
+                            child: const Text("Canjear")
+                          ),
+                        ],
+                      ),
+                    );
                   },
                 ),
                 ListTile(

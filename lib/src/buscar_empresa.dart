@@ -1,3 +1,4 @@
+// ignore_for_file: unused_import, missing_return, avoid_print
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
@@ -46,10 +47,8 @@ class BuscarEmpresa extends SearchDelegate<EmpresaAll>{
     };
     Uri uri = Uri.parse(url);
     final response = await http.post(uri, body: body, headers: {"token": token});
-    print('La respuesta es: ${response.statusCode}');
     if (response.statusCode == 200) {
-      final jsonData = json.decode(utf8.decode(response.bodyBytes));
-      print('El resultado es: $jsonData');
+      final jsonData = jsonDecode(utf8.decode(response.bodyBytes));
       List<EmpresaAll> empresas = [];
       for (var item in jsonData) {
         EmpresaAll empresa = EmpresaAll(
@@ -62,8 +61,8 @@ class BuscarEmpresa extends SearchDelegate<EmpresaAll>{
       }
       return empresas;
     } else if (response.statusCode == 400) {
-      final jsonData = json.decode(utf8.decode(response.bodyBytes));
-      print('El resultado del estatus 400 es: $jsonData');
+      final jsonData = jsonDecode(utf8.decode(response.bodyBytes));
+      print(jsonData);
     }else {
       Exception('Error');
     }
