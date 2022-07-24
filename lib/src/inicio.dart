@@ -125,12 +125,15 @@ class _InicioState extends State<Inicio> {
   Widget _scafold(Usuario user){
     return Scaffold(
       appBar: AppBar(
-        title: ListTile(
-          onTap: () {
-            showSearch(context: context, delegate: BuscarEmpresa(token));
-          },
-          title: const Text("Buscar", style: TextStyle(color: Colors.white),),
-        ),
+        title: const Text('Inicio'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.search),
+            onPressed: () {
+              showSearch(context: context, delegate: BuscarEmpresa(token));
+            },
+          ),
+        ],
         backgroundColor: Colors.blue,
       ),
       drawer: _drawer(user),

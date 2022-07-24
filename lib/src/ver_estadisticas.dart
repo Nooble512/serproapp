@@ -7,6 +7,9 @@ import 'package:serproapp/model/Estadistica.dart';
 import 'package:serproapp/model/Url_Api.dart';
 import 'package:http/http.dart' as http;
 import 'package:charts_flutter/flutter.dart' as charts;
+import 'package:charts_flutter/src/text_element.dart' as elements;
+import 'package:charts_flutter/src/text_style.dart' as styles;
+import 'dart:math';
 
 class VerEstadisticas extends StatefulWidget {
   String token;
@@ -19,6 +22,18 @@ class VerEstadisticas extends StatefulWidget {
 class _VerEstadisticasState extends State<VerEstadisticas> {
   String token;
   _VerEstadisticasState(this.token);
+
+  static String pointerAmount;
+  static String pointerDay;
+
+  static String pointerAmount2;
+  static String pointerDay2;
+
+  static String pointerAmount3;
+  static String pointerDay3;
+
+  static String pointerAmount4;
+  static String pointerDay4;
 
   Future<List<Estadistica>> _interaccionEmpresa;
   Future<List<Estadistica>> _getInteraccionEmpresa() async {
@@ -119,7 +134,6 @@ class _VerEstadisticasState extends State<VerEstadisticas> {
       builder: (BuildContext context, AsyncSnapshot<List<Estadistica>> snapshot) {
         if (snapshot.hasData){
           final data = snapshot.data;
-
           List<charts.Series<Estadistica, int>> series = [
             charts.Series<Estadistica, int>(
               id: 'Interaccion',
@@ -130,7 +144,28 @@ class _VerEstadisticasState extends State<VerEstadisticas> {
           ];
           return SizedBox(
             height: 350,
-            child: charts.LineChart(series),
+            child: charts.LineChart(
+              series,
+              selectionModels: [
+                charts.SelectionModelConfig(
+                  changedListener: (charts.SelectionModel model){
+                    if (model.hasDatumSelection){
+                      pointerAmount  = model.selectedSeries[0]
+                      .measureFn(model.selectedDatum[0].index)
+                      .toStringAsFixed(2);
+                      pointerDay = model.selectedSeries[0]
+                      .domainFn(model.selectedDatum[0].index)
+                      .toString();
+                    }
+                  }
+                )
+              ],
+              behaviors: [
+                charts.LinePointHighlighter(
+                  symbolRenderer: MySymbolRender(),
+                ),
+              ],
+            ),
           );
         } else if (snapshot.hasError){
           return const Text('Error');
@@ -160,7 +195,28 @@ class _VerEstadisticasState extends State<VerEstadisticas> {
           ];
           return SizedBox(
             height: 350,
-            child: charts.LineChart(series),
+            child: charts.LineChart(
+              series,
+              selectionModels: [
+                charts.SelectionModelConfig(
+                  changedListener: (charts.SelectionModel model){
+                    if (model.hasDatumSelection){
+                      pointerAmount2  = model.selectedSeries[0]
+                      .measureFn(model.selectedDatum[0].index)
+                      .toStringAsFixed(2);
+                      pointerDay2 = model.selectedSeries[0]
+                      .domainFn(model.selectedDatum[0].index)
+                      .toString();
+                    }
+                  }
+                )
+              ],
+              behaviors: [
+                charts.LinePointHighlighter(
+                  symbolRenderer: MySymbolRender2(),
+                ),
+              ],
+            ),
           );
         } else if (snapshot.hasError){
           return const Text('Error');
@@ -190,7 +246,28 @@ class _VerEstadisticasState extends State<VerEstadisticas> {
           ];
           return SizedBox(
             height: 350,
-            child: charts.LineChart(series),
+            child: charts.LineChart(
+              series,
+              selectionModels: [
+                charts.SelectionModelConfig(
+                  changedListener: (charts.SelectionModel model){
+                    if (model.hasDatumSelection){
+                      pointerAmount3  = model.selectedSeries[0]
+                      .measureFn(model.selectedDatum[0].index)
+                      .toStringAsFixed(2);
+                      pointerDay3 = model.selectedSeries[0]
+                      .domainFn(model.selectedDatum[0].index)
+                      .toString();
+                    }
+                  }
+                )
+              ],
+              behaviors: [
+                charts.LinePointHighlighter(
+                  symbolRenderer: MySymbolRender3(),
+                ),
+              ],
+            ),
           );
         } else if (snapshot.hasError){
           return const Text('Error');
@@ -220,7 +297,28 @@ class _VerEstadisticasState extends State<VerEstadisticas> {
           ];
           return SizedBox(
             height: 350,
-            child: charts.LineChart(series),
+            child: charts.LineChart(
+              series,
+              selectionModels: [
+                charts.SelectionModelConfig(
+                  changedListener: (charts.SelectionModel model){
+                    if (model.hasDatumSelection){
+                      pointerAmount4  = model.selectedSeries[0]
+                      .measureFn(model.selectedDatum[0].index)
+                      .toStringAsFixed(2);
+                      pointerDay4 = model.selectedSeries[0]
+                      .domainFn(model.selectedDatum[0].index)
+                      .toString();
+                    }
+                  }
+                )
+              ],
+              behaviors: [
+                charts.LinePointHighlighter(
+                  symbolRenderer: MySymbolRender4(),
+                ),
+              ],
+            ),
           );
         } else if (snapshot.hasError){
           return const Text('Error');
@@ -287,6 +385,205 @@ class _VerEstadisticasState extends State<VerEstadisticas> {
           ),
         ),
       ),
+    );
+  }
+}
+
+class MySymbolRender extends charts.CircleSymbolRenderer{
+  @override
+  void paint(
+    charts.ChartCanvas canvas, 
+    Rectangle<num> bounds, 
+    {
+      List<int> dashPattern, 
+      charts.Color fillColor, 
+      charts.FillPatternType fillPattern,
+      charts.Color strokeColor, 
+      double strokeWidthPx
+    }) {
+    // TODO: implement paint
+    super.paint(
+      canvas, 
+      bounds, 
+      dashPattern: dashPattern, 
+      fillColor: fillColor, 
+      fillPattern: fillPattern, 
+      strokeColor: strokeColor, 
+      strokeWidthPx: strokeWidthPx
+    );
+
+    canvas.drawRect(
+      Rectangle(
+        bounds.left - 25, 
+        bounds.top - 30, 
+        bounds.width + 48, 
+        bounds.height + 18,
+      ),
+      fill: charts.ColorUtil.fromDartColor(Colors.grey),
+      stroke: charts.ColorUtil.fromDartColor(Colors.green),
+      strokeWidthPx: 2
+    );
+
+    var myStyle = styles.TextStyle();
+    myStyle.fontSize = 10;
+
+    canvas.drawText(
+      elements.TextElement(
+        'Dia ${_VerEstadisticasState.pointerDay} \n${_VerEstadisticasState.pointerAmount}',
+        style: myStyle
+      ), 
+      (bounds.left -20).round() , 
+      (bounds.top - 26).round()
+    );
+  }
+}
+
+class MySymbolRender2 extends charts.CircleSymbolRenderer{
+  @override
+  void paint(
+    charts.ChartCanvas canvas, 
+    Rectangle<num> bounds, 
+    {
+      List<int> dashPattern, 
+      charts.Color fillColor, 
+      charts.FillPatternType fillPattern,
+      charts.Color strokeColor, 
+      double strokeWidthPx
+    }
+  ) {
+
+    super.paint(
+      canvas, 
+      bounds, 
+      dashPattern: dashPattern, 
+      fillColor: fillColor, 
+      fillPattern: fillPattern, 
+      strokeColor: strokeColor, 
+      strokeWidthPx: strokeWidthPx
+    );
+
+    canvas.drawRect(
+      Rectangle(
+        bounds.left - 25, 
+        bounds.top - 30, 
+        bounds.width + 48, 
+        bounds.height + 18,
+      ),
+      fill: charts.ColorUtil.fromDartColor(Colors.grey),
+      stroke: charts.ColorUtil.fromDartColor(Colors.green),
+      strokeWidthPx: 2
+    );
+
+    var myStyle = styles.TextStyle();
+    myStyle.fontSize = 10;
+
+    canvas.drawText(
+      elements.TextElement(
+        'Dia ${_VerEstadisticasState.pointerDay2} \n${_VerEstadisticasState.pointerAmount2}',
+        style: myStyle
+      ), 
+      (bounds.left -20).round() , 
+      (bounds.top - 26).round()
+    );
+  }
+}
+
+class MySymbolRender3 extends charts.CircleSymbolRenderer{
+  @override
+  void paint(
+    charts.ChartCanvas canvas, 
+    Rectangle<num> bounds, 
+    {
+      List<int> dashPattern, 
+      charts.Color fillColor, 
+      charts.FillPatternType fillPattern,
+      charts.Color strokeColor, 
+      double strokeWidthPx
+    }
+  ) {
+
+    super.paint(
+      canvas, 
+      bounds, 
+      dashPattern: dashPattern, 
+      fillColor: fillColor, 
+      fillPattern: fillPattern, 
+      strokeColor: strokeColor, 
+      strokeWidthPx: strokeWidthPx
+    );
+
+    canvas.drawRect(
+      Rectangle(
+        bounds.left - 25, 
+        bounds.top - 30, 
+        bounds.width + 48, 
+        bounds.height + 18,
+      ),
+      fill: charts.ColorUtil.fromDartColor(Colors.grey),
+      stroke: charts.ColorUtil.fromDartColor(Colors.green),
+      strokeWidthPx: 2
+    );
+
+    var myStyle = styles.TextStyle();
+    myStyle.fontSize = 10;
+
+    canvas.drawText(
+      elements.TextElement(
+        'Dia ${_VerEstadisticasState.pointerDay3} \n${_VerEstadisticasState.pointerAmount3}',
+        style: myStyle
+      ), 
+      (bounds.left -20).round() , 
+      (bounds.top - 26).round()
+    );
+  }
+}
+
+class MySymbolRender4 extends charts.CircleSymbolRenderer{
+  @override
+  void paint(
+    charts.ChartCanvas canvas, 
+    Rectangle<num> bounds, 
+    {
+      List<int> dashPattern, 
+      charts.Color fillColor, 
+      charts.FillPatternType fillPattern,
+      charts.Color strokeColor, 
+      double strokeWidthPx
+    }
+  ) {
+
+    super.paint(
+      canvas, 
+      bounds, 
+      dashPattern: dashPattern, 
+      fillColor: fillColor, 
+      fillPattern: fillPattern, 
+      strokeColor: strokeColor, 
+      strokeWidthPx: strokeWidthPx
+    );
+
+    canvas.drawRect(
+      Rectangle(
+        bounds.left - 25, 
+        bounds.top - 30, 
+        bounds.width + 48, 
+        bounds.height + 18,
+      ),
+      fill: charts.ColorUtil.fromDartColor(Colors.grey),
+      stroke: charts.ColorUtil.fromDartColor(Colors.green),
+      strokeWidthPx: 2
+    );
+
+    var myStyle = styles.TextStyle();
+    myStyle.fontSize = 10;
+
+    canvas.drawText(
+      elements.TextElement(
+        'Dia ${_VerEstadisticasState.pointerDay4} \n${_VerEstadisticasState.pointerAmount4}',
+        style: myStyle
+      ), 
+      (bounds.left -20).round() , 
+      (bounds.top - 26).round()
     );
   }
 }
